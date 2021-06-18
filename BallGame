@@ -1,0 +1,107 @@
+package com.one.practice;
+
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.*;
+
+public class PinBall {
+    private Frame f = new Frame("弹球小游戏");
+    //球桌宽与长
+    private final int TABLE_WIDTH = 400;
+    private final int TABLE_HEIGHT = 500;
+    //球拍宽与长
+    private final int RACKET_WIDTH = 100;
+    private final int RACKET_HEIGHT = 20;
+    //球直径
+    private final int BALL_DIAMETER = 10;
+    //球移动速度
+    private int speedX = 10;
+    private int speedY = 10;
+    //定义球拍位置
+    private int racketX = 170;
+    private final int rackety = 400;
+    //定义球的位置
+    private int ballX = 120;
+    private int ballY = 20;
+    //判断游戏结束
+    private boolean isOver = false;
+    private Timer timer;
+
+    //判断游戏是否结束
+    public class MyCanvas extends Canvas {
+        @Override
+        public void paint(Graphics g) {
+            if (isOver) {
+                //设置黑色，加粗，字体大小，位置
+                g.setColor(Color.BLUE);
+                g.setFont(new Font("time", Font.BOLD, 40));
+                g.drawString("游戏结束", 100, 200);
+            } else {
+                //设置红色，画球
+                g.setColor(Color.RED);
+                g.fillOval(ballX, ballY, BALL_DIAMETER, BALL_DIAMETER);
+                //设置粉色，画球拍
+                g.setColor(Color.PINK);
+                g.fillRect(racketX, rackety, RACKET_WIDTH, RACKET_HEIGHT);
+            }
+        }
+    }
+
+    MyCanvas drawArea = new MyCanvas();
+
+    //绘制
+    public void init() {
+        //键盘监听器，监控左右键，加减球拍X位移
+        KeyListener listener = new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                int keyCode = e.getKeyCode();
+                if (keyCode == KeyEvent.VK_LEFT && racketX > 0) {
+                    racketX -= 10;
+                }
+                if (keyCode == KeyEvent.VK_RIGHT && racketX < (TABLE_WIDTH - RACKET_WIDTH)) {
+                    racketX += 10;
+                }
+            }
+        };
+//        给整个界面添加监控
+        f.addKeyListener(listener);
+        drawArea.addKeyListener(listener);
+//        增加动作监听器，重写repaint方法，小球位置重塑
+        ActionListener task = new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                //小球到达左右边界，X速度反向
+                if (ballX < 0 || ballX > TABLE_WIDTH - BALL_DIAMETER) {
+                    speedX = -speedX;
+                }
+                //小球到达上下边界，Y速度反向
+                if (ballY < 0 || (ballY > rackety - BALL_DIAMETER && ballX > racketX && ballX < racketX + RACKET_WIDTH)) {
+                    speedY = -speedY;
+                }
+                //小球超过下边界，X位移不在球拍范围内，定时器关闭，游戏标记结束，画面重塑
+                if (ballY > rackety - BALL_DIAMETER && (ballX < racketX || ballX > racketX + RACKET_WIDTH)) {
+                    timer.stop();
+                    isOver = true;
+                    drawArea.repaint();
+                }
+//                正常X,Y位移,小球定时重塑
+                ballX += speedX;
+                ballY += speedY;
+                drawArea.repaint();
+            }
+        };
+//        设置定时器间隔100MS,执行动作监视器，开启定时器
+        timer = new Timer(100, task);
+        timer.start();
+//        设置画布大小，添加画布到界面，界面最佳大小，可视
+        drawArea.setPreferredSize(new Dimension(TABLE_WIDTH, TABLE_HEIGHT));
+        f.add(drawArea);
+        f.pack();
+        f.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        new PinBall().init();
+    }
+}
